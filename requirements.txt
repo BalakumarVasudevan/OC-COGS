@@ -1,0 +1,7 @@
+--find-links wheelhouse
+certifi==2019.9.11
+chardet==3.0.4
+idna==2.8
+pyodbc==4.0.27
+requests==2.22.0
+urllib3==1.25.6

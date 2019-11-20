@@ -1,0 +1,82 @@
+{
+	"AZURE_TENANT_ID": "",
+	"AZURE_CLIENT_ID": "",
+	"AZURE_CLIENT_SECRET": "",
+	"AZURE_RESOURCE": "https://management.azure.com/",
+	"AZURE_SUBSCRIPTIONS": [
+		{
+			"NAME": "CRM_SERVICE_NONPROD_OMNICHANNEL_TESTINTEG_001",
+			"ID": "7da41661-fb51-45ba-b8f2-b4c136cb904b"
+		},
+		{
+			"NAME": "CRM_SERVICE_NONPROD_OMNICHANNEL_DEVINTEG_001",
+			"ID": "0eba8352-8af0-421f-bc21-38e432893eb3"
+		},
+		{
+			"NAME": "CRM_SERVICE_NONPROD_OMNICHANNEL_DOGFOOD_001",
+			"ID": "94f2fd84-ddf5-43ad-89c6-5d56dfbadf14"
+		},
+		{
+			"NAME": "Omnichannel Redmond",
+			"ID": "23f5367c-d006-4464-8de1-57141d52e809"
+		},
+		{
+			"NAME": "EFUN",
+			"ID": "8ce5da9f-085a-45a2-84d0-1e423d6e8094"
+		},
+		{
+			"NAME": "DevTest-Microsoft services-POC",
+			"ID": "3887c155-052e-4ed1-b22d-30602c7d1677"
+		},
+		{
+			"NAME": "CRM_SERVICE_NONPROD_OMNICHANNEL_TELEMETRY_INFRA_001",
+			"ID": "3c3d48e5-0a91-412f-ab84-f6239bce1972"
+		},
+		{
+			"NAME": "CRM_SERVICE_NONPROD_OMNICHANNEL_SUBMGMT_001",
+			"ID": "aa7bcd1f-c353-4a51-bc61-39551a0ad568"
+		},
+		{
+			"NAME": "CRM_SERVICE_NONPROD_OMNICHANNEL_SUBMGMT_002",
+			"ID": "a49dfef7-a62c-4434-b4c1-2513159d5c63"
+		}
+	],
+	"AZURE_GRANT_TYPE": "client_credentials",
+	"URLS": {
+		"ACCESS_TOKEN": "https://login.microsoftonline.com/{TENANT_ID}/oauth2/token",
+		"LIST_RESOURCEGROUPS": "https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/resourcegroups?api-version=2017-05-10",
+		"LIST_RESOURCES": "https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/resources?api-version=2019-05-10",
+		"LIST_TAGS": "https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/tagNames?api-version=2019-05-10",
+		"LIST_ACTIVITY_LOGS": "https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/providers/microsoft.insights/eventtypes/management/values?api-version=2015-04-01",
+		"LIST_COST": "https://management.azure.com/{SCOPE}/providers/Microsoft.CostManagement/dimensions?api-version=2019-01-01",
+		"COST_MGMT_BY_SUB": "https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/providers/Microsoft.CostManagement/query?api-version=2019-01-01"
+	},
+	"DB": {
+		"SERVER_NAME": "scalerunstore.database.windows.net",
+		"NAME": "CogsStore",
+		"USERNAME": "",
+		"PWD": "",
+		"DRIVER": "{ODBC Driver 17 for SQL Server}",
+		"ODBC_CONNECTION_STR": "DRIVER={DRIVER};SERVER={DB_SERVER};PORT=1433;DATABASE={DB_NAME};UID={DB_USERNAME};PWD={DB_PWD}"
+
+	},
+	"SQL": {
+		"RG_TRUNCATE_SQL": "TRUNCATE TABLE ResourceGroup",
+		"RG_COST_TRUNCATE_SQL": "TRUNCATE TABLE ResourceGroupCost",
+		"RG_INSERT_SQL": "INSERT INTO ResourceGroup (Resourcegroup, Subscription, Owner, Env, CreatedDate, LastUsed, CanBeDeleted) VALUES (?,?,?,?,?,?,?)",
+		"RG_COST_INSERT_SQL": "INSERT INTO ResourceGroupCost (ResourceGroup, Subscription, CurrentMonthCost, PrevMonthCost) VALUES (?,?,?,?)",
+		"VMSS_TRUNCATE_SQL": "TRUNCATE TABLE VMSSResource",
+		"VMSS_INSERT_SQL": "INSERT INTO VMSSResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, Name, Size, Tier, ClusterName) VALUES (?,?,?,?,?,?,?,?,?)",
+		"UPDATE_LAST_USED_SQL": "UPDATE ReportMetadata SET LastRefresh = (?)",
+		"APIM_TRUNCATE_SQL": "TRUNCATE TABLE APIMResource",
+		"APIM_INSERT_SQL": "INSERT INTO APIMResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, Name) VALUES (?,?,?,?,?,?)",
+		"COSMOS_TRUNCATE_SQL": "TRUNCATE TABLE CosmosResource",
+		"COSMOS_INSERT_SQL": "INSERT INTO CosmosResource (Subscription, ResourceGroup, Resource, RU, Kind, Location, CreatedTime, ChangedTime) VALUES (?,?,?,?,?,?,?,?)",
+		"SB_TRUNCATE_SQL": "TRUNCATE TABLE ServiceBusResource",
+		"SB_INSERT_SQL": "INSERT INTO ServiceBusResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, ChangedTime, Tier, SkuName, Location) VALUES (?,?,?,?,?,?,?,?,?)"
+	},
+	"DATES": {
+		"READ_DATE_FORMAT": "%Y-%m-%dT%H:%M:%S.%f",
+		"WRITE_DATE_FORMAT": "%Y-%m-%d %H:%M:%S.%f"
+	}
+}
