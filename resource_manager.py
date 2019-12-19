@@ -2,7 +2,7 @@ import os
 import requests
 import json
 import pyodbc
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 import logging
 
@@ -20,8 +20,10 @@ REQUESTS_METHOD_MAP = {
 # Global vars
 rg_by_subs = {}
 resources = {}
+resources_by_sub = {}
 rg_by_owner = {}
 rg_list = []
+resources_sql_list = []
 vmss_sql_list = []
 apim_sql_list = []
 cosmos_sql_list = []
@@ -31,6 +33,8 @@ cost_by_rg_list = []
 CONFIG = None
 ACCESS_TOKEN = None
 DUMMY_DATE = datetime.now()
+SUBSCRIPTION_NAME_TO_ID = {}
+SUBSCRIPTION_ID_TO_NAME = {}
 
 def print_item(group):
     """Print a ResourceGroup instance."""
@@ -195,6 +199,25 @@ def get_cost_by_scope_list(subscriptions, scope=None, headers=None):
 		while url:
 			response = do_requests(url, REQUESTS_GET, headers=headers)
 
+def print_list_of_orphan_rgs_older_than_n_days(days=1):
+	global rg_by_owner
+	global SUBSCRIPTION_ID_TO_NAME
+	print("\n\nList of orphan RGs")
+	cat_by_sub = {}
+	for rg in rg_by_owner["orphan"]["resource_groups"]:
+		sub = rg["subscription"]
+		created_time = datetime.strptime(rg["createdDate"][:23], CONFIG["DATES"]["READ_DATE_FORMAT"])
+
+		if sub not in cat_by_sub:
+			cat_by_sub[sub] = []
+		if rg["name"] not in cat_by_sub[sub] and (created_time < datetime.now() - timedelta(days=days)):
+			cat_by_sub[sub].append(rg["name"])
+
+	for sub, rgs in cat_by_sub.items():
+		print("\n\n*** Subscription: {0} ***".format(SUBSCRIPTION_ID_TO_NAME[sub]))
+		for rg in rgs:
+			if "oc-local-" not in rg:
+				print(rg)
 
 def get_resource_groups_by_owner():
 	for subscription_id, rgs in rg_by_subs.items():
@@ -388,6 +411,17 @@ def upsert_rg_cost_list_to_sql():
 	end = time.time()
 	print("Time to upsert RGs cost to Azure SQL: {0}".format(end - start))
 
+def upsert_all_resources_list_to_sql(all_resources_list):
+	global cursor
+	global cnxn
+	global CONFIG
+	start = time.time()
+	cursor.execute(CONFIG["SQL"]["RESOURCES_TRUNCATE_SQL"])
+	cursor.executemany(CONFIG["SQL"]["RESOURCES_INSERT_SQL"], all_resources_list)
+	cnxn.commit()
+	end = time.time()
+	print("Time to upsert all Resources to Azure SQL: {0}".format(end - start))
+
 def upsert_vmss_list_to_sql(vmss_list):
 	global cursor
 	global cnxn
@@ -442,6 +476,29 @@ def update_last_refreshed():
 
 def get_filter(key, value, clause):
 	return "{0} {1} '{2}'".format(key, clause, value)
+
+def get_all_resources_list_helper(headers=None, expand=None):
+	global resources_sql_list
+	resources_per_sub = get_resources_list(CONFIG["AZURE_SUBSCRIPTIONS"], headers=headers, expand=expand)
+	for subscription_id, resources_list in resources_per_sub.items():
+		for resource in resources_list:
+			sku = resource["sku"] if "sku" in resource else None
+			rg_name = resource["id"].split('/')[4]
+			resource_provider = resource["type"].split('/')[0]
+			created_time = datetime.strptime(resource["createdTime"][:23], CONFIG["DATES"]["READ_DATE_FORMAT"])
+			resources_sql_list.append(
+				(
+					subscription_id,
+					rg_name,
+					resource["name"],
+					resource_provider,
+					resource["type"],
+					json.dumps(sku),
+					created_time
+				)
+			)
+
+	return resources_sql_list
 
 def get_vmss_resource_list_helper(headers=None, expand=None):
 	global vmss_sql_list
@@ -573,6 +630,11 @@ def _load_db_cnxn():
 def main():
 	_load_config()
 	_load_db_cnxn()
+	global SUBSCRIPTION_NAME_TO_ID
+	global SUBSCRIPTION_ID_TO_NAME
+	SUBSCRIPTION_NAME_TO_ID = {sub["NAME"]: sub["ID"] for sub in CONFIG["AZURE_SUBSCRIPTIONS"]}
+	SUBSCRIPTION_ID_TO_NAME = {sub["ID"]: sub["NAME"] for sub in CONFIG["AZURE_SUBSCRIPTIONS"]}
+
 	print("Refreshing access token")
 	ACCESS_TOKEN = _get_access_token()
 	headers = {"Authorization": 'Bearer {0}'.format(ACCESS_TOKEN)}
@@ -582,18 +644,21 @@ def main():
 	apim_list = get_apim_resource_list_helper(headers=headers, expand=expand)
 	cosmos_list = get_cosmos_resource_list_helper(headers=headers, expand=expand)
 	service_bus_list = get_sb_resource_list_helper(headers=headers, expand=expand)
+	all_resources_list = get_all_resources_list_helper(headers=headers, expand=expand)
 
 	get_resource_groups_list(CONFIG["AZURE_SUBSCRIPTIONS"], headers=headers, filter=None, expand=expand)
 	# get_tags_list(AZURE_SUBSCRIPTION_ID_1, headers=headers)
 	# get_activity_logs_list(AZURE_SUBSCRIPTION_ID, headers=headers)
 
 	get_resource_groups_by_owner()
+	print_list_of_orphan_rgs_older_than_n_days(days=14)
 	get_cost_by_rg_current_month(headers=headers)
 	get_cost_by_rg_last_month(headers=headers)
 	get_cost_by_rg_list()
 
 	# get_cost_by_rg_owner()
 
+	upsert_all_resources_list_to_sql(all_resources_list)
 	upsert_rg_list_to_sql()
 	upsert_rg_cost_list_to_sql()
 	upsert_vmss_list_to_sql(vmss_list)

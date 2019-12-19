@@ -73,7 +73,9 @@
 		"COSMOS_TRUNCATE_SQL": "TRUNCATE TABLE CosmosResource",
 		"COSMOS_INSERT_SQL": "INSERT INTO CosmosResource (Subscription, ResourceGroup, Resource, RU, Kind, Location, CreatedTime, ChangedTime) VALUES (?,?,?,?,?,?,?,?)",
 		"SB_TRUNCATE_SQL": "TRUNCATE TABLE ServiceBusResource",
-		"SB_INSERT_SQL": "INSERT INTO ServiceBusResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, ChangedTime, Tier, SkuName, Location) VALUES (?,?,?,?,?,?,?,?,?)"
+		"SB_INSERT_SQL": "INSERT INTO ServiceBusResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, ChangedTime, Tier, SkuName, Location) VALUES (?,?,?,?,?,?,?,?,?)",
+		"RESOURCES_TRUNCATE_SQL": "TRUNCATE TABLE Resource",
+		"RESOURCES_INSERT_SQL": "INSERT INTO Resource (Subscription, ResourceGroup, Resource, ResourceProvider, ResourceType, Properties, CreatedTime) VALUES (?,?,?,?,?,?,?)"
 	},
 	"DATES": {
 		"READ_DATE_FORMAT": "%Y-%m-%dT%H:%M:%S.%f",
