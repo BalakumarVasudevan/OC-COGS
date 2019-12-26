@@ -22,7 +22,6 @@ class COGSResourceManager(object):
 	}
 
 	def __init__(self):
-		print("init")
 		self.CONFIG = None
 		self.ACCESS_TOKEN = None
 		self.DUMMY_DATE = datetime.now()
@@ -88,7 +87,6 @@ class COGSResourceManager(object):
 	@staticmethod
 	def _get_unoptimized_clusters(resources):
 		for subscription_id, resource_list in resources:
-			print("Subscription {0}".format(subscription_id))
 			for resource in resource_list:
 				if resource["name"].endswith("tp"):
 					if "sku" in resource:
@@ -320,7 +318,6 @@ class COGSResourceManager(object):
 				rows = data["properties"]["rows"]
 				for row in rows:
 					if row:
-						# print(row)
 						rg_name = row[1]
 						cost = row[0]
 						self.cost_by_rg[rg_name] = {
@@ -469,7 +466,6 @@ class COGSResourceManager(object):
 	def get_apim_resource_list_helper(self, headers=None, expand=None):
 		filter = self.get_filter("resourceType", "Microsoft.ApiManagement/service", "eq")
 		apim_per_sub = self.get_resources_list(self.CONFIG["AZURE_SUBSCRIPTIONS"], headers=headers, filter=filter, expand=expand)
-		print(json.dumps(apim_per_sub, indent=4))
 		for subscription_id, apim_list in apim_per_sub.items():
 			for apim in apim_list:
 				sku = apim["sku"] if "sku" in apim else None
