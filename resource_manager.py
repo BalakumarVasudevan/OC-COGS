@@ -560,14 +560,14 @@ class COGSResourceManager(object):
 		logging.info("Done.")
 
 	def upsert_to_sql_wrapper(self):
-		self.upsert_to_sql("RG", data=self.rg_list)
-		self.upsert_to_sql("RG_COST", data=self.cost_by_rg_list)
-		self.upsert_to_sql("ALL_RESOURCES", data=self.all_resources_list)
-		self.upsert_to_sql("VMSS", data=self.vmss_list)
-		self.upsert_to_sql("APIM", data=self.apim_list)
-		self.upsert_to_sql("COSMOS", data=self.cosmos_list)
-		self.upsert_to_sql("SERVICE_BUS", data=self.service_bus_list)
-		self.upsert_to_sql("LAST_REFRESHED", data=datetime.now(), is_update=True)
+		self.upsert_to_sql("ResourceGroup", data=self.rg_list)
+		self.upsert_to_sql("ResourceGroupCost", data=self.cost_by_rg_list)
+		self.upsert_to_sql("Resource", data=self.all_resources_list)
+		self.upsert_to_sql("VMSSResource", data=self.vmss_list)
+		self.upsert_to_sql("APIMResource", data=self.apim_list)
+		self.upsert_to_sql("CosmosResource", data=self.cosmos_list)
+		self.upsert_to_sql("ServiceBusResource", data=self.service_bus_list)
+		self.upsert_to_sql("LastRefresh", data=datetime.now(), is_update=True)
 
 	def build_resources_list_wrapper(self, headers=None, expand=None):
 		self.vmss_list = self.get_vmss_resource_list_helper(headers=headers, expand=expand)
