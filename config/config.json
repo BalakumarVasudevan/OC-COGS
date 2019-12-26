@@ -61,21 +61,37 @@
 
 	},
 	"SQL": {
-		"RG_TRUNCATE_SQL": "TRUNCATE TABLE ResourceGroup",
-		"RG_COST_TRUNCATE_SQL": "TRUNCATE TABLE ResourceGroupCost",
-		"RG_INSERT_SQL": "INSERT INTO ResourceGroup (Resourcegroup, Subscription, Owner, Env, CreatedDate, LastUsed, CanBeDeleted) VALUES (?,?,?,?,?,?,?)",
-		"RG_COST_INSERT_SQL": "INSERT INTO ResourceGroupCost (ResourceGroup, Subscription, CurrentMonthCost, PrevMonthCost) VALUES (?,?,?,?)",
-		"VMSS_TRUNCATE_SQL": "TRUNCATE TABLE VMSSResource",
-		"VMSS_INSERT_SQL": "INSERT INTO VMSSResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, Name, Size, Tier, ClusterName) VALUES (?,?,?,?,?,?,?,?,?)",
-		"UPDATE_LAST_USED_SQL": "UPDATE ReportMetadata SET LastRefresh = (?)",
-		"APIM_TRUNCATE_SQL": "TRUNCATE TABLE APIMResource",
-		"APIM_INSERT_SQL": "INSERT INTO APIMResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, Name) VALUES (?,?,?,?,?,?)",
-		"COSMOS_TRUNCATE_SQL": "TRUNCATE TABLE CosmosResource",
-		"COSMOS_INSERT_SQL": "INSERT INTO CosmosResource (Subscription, ResourceGroup, Resource, RU, Kind, Location, CreatedTime, ChangedTime) VALUES (?,?,?,?,?,?,?,?)",
-		"SB_TRUNCATE_SQL": "TRUNCATE TABLE ServiceBusResource",
-		"SB_INSERT_SQL": "INSERT INTO ServiceBusResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, ChangedTime, Tier, SkuName, Location) VALUES (?,?,?,?,?,?,?,?,?)",
-		"RESOURCES_TRUNCATE_SQL": "TRUNCATE TABLE Resource",
-		"RESOURCES_INSERT_SQL": "INSERT INTO Resource (Subscription, ResourceGroup, Resource, ResourceProvider, ResourceType, Properties, CreatedTime) VALUES (?,?,?,?,?,?,?)"
+		"RG": {
+			"TRUNCATE_SQL": "TRUNCATE TABLE ResourceGroup",
+			"INSERT_SQL": "INSERT INTO ResourceGroup (Resourcegroup, Subscription, Owner, Env, CreatedDate, LastUsed, CanBeDeleted) VALUES (?,?,?,?,?,?,?)"
+		},
+		"RG_COST": {
+			"TRUNCATE_SQL": "TRUNCATE TABLE ResourceGroupCost",
+			"INSERT_SQL": "INSERT INTO ResourceGroupCost (ResourceGroup, Subscription, CurrentMonthCost, PrevMonthCost) VALUES (?,?,?,?)"
+		},
+		"VMSS": {
+			"TRUNCATE_SQL": "TRUNCATE TABLE VMSSResource",
+			"INSERT_SQL": "INSERT INTO VMSSResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, Name, Size, Tier, ClusterName) VALUES (?,?,?,?,?,?,?,?,?)"
+		},
+		"LAST_REFRESHED": {
+			"UPDATE_SQL": "UPDATE ReportMetadata SET LastRefresh = (?)"
+		},
+		"APIM": {
+			"TRUNCATE_SQL": "TRUNCATE TABLE APIMResource",
+			"INSERT_SQL": "INSERT INTO APIMResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, Name) VALUES (?,?,?,?,?,?)"
+		},
+		"COSMOS": {
+			"TRUNCATE_SQL": "TRUNCATE TABLE CosmosResource",
+			"INSERT_SQL": "INSERT INTO CosmosResource (Subscription, ResourceGroup, Resource, RU, Kind, Location, CreatedTime, ChangedTime) VALUES (?,?,?,?,?,?,?,?)"
+		},
+		"SERVICE_BUS": {
+			"TRUNCATE_SQL": "TRUNCATE TABLE ServiceBusResource",
+			"INSERT_SQL": "INSERT INTO ServiceBusResource (Subscription, ResourceGroup, Resource, Capacity, CreatedTime, ChangedTime, Tier, SkuName, Location) VALUES (?,?,?,?,?,?,?,?,?)"
+		},
+		"ALL_RESOURCES": {
+			"TRUNCATE_SQL": "TRUNCATE TABLE Resource",
+			"INSERT_SQL": "INSERT INTO Resource (Subscription, ResourceGroup, Resource, ResourceProvider, ResourceType, Properties, CreatedTime) VALUES (?,?,?,?,?,?,?)"
+		}
 	},
 	"DATES": {
 		"READ_DATE_FORMAT": "%Y-%m-%dT%H:%M:%S.%f",
