@@ -5,6 +5,9 @@ import pyodbc
 from datetime import datetime, timedelta
 import time
 import logging
+from dateutil.relativedelta import relativedelta
+
+from aria import LogManager, EventProperties, PiiKind, LogConfiguration, LogManagerConfiguration
 
 class COGSResourceManager(object):
 	"""
@@ -20,6 +23,8 @@ class COGSResourceManager(object):
 		REQUESTS_POST: requests.post,
 		REQUESTS_GET: requests.get,
 	}
+
+	PREV_DAYS_LIST = ["prevDay", "prev2Day", "prev3Day", "prev4Day", "prev5Day", "prev6Day", "prev7Day"]
 
 	def __init__(self):
 		self.CONFIG = None
@@ -93,6 +98,24 @@ class COGSResourceManager(object):
 						if resource["sku"]["name"] != "Standard_D2_v3" or resource["sku"]["capacity"] != 3:
 							print("\n{0}\nSKU: {1}".format(resource["name"], resource["sku"]))
 
+	def _get_start_end_of_prev_prev_month(self, current_date):
+		"""
+			For a date 'date' returns the start and end date for the month of 'date'.
+			Month with 31 days:
+			>>> date = datetime.date(2011, 7, 27)
+			>>> get_month_day_range(date)
+			(datetime.date(2011, 7, 1), datetime.date(2011, 7, 31))
+			Month with 28 days:
+			>>> date = datetime.date(2011, 2, 15)
+			>>> get_month_day_range(date)
+			(datetime.date(2011, 2, 1), datetime.date(2011, 2, 28))
+		"""
+		last_day = current_date + relativedelta(day=1, months=+1, days=-1)
+		first_day = current_date + relativedelta(day=1)
+		return first_day, last_day
+
+	def _get_start_end_of_day(self, prev_date):
+		return prev_date.replace(hour=0, minute=0, second=0), prev_date.replace(hour=23, minute=59, second=59)
 
 	def get_resource_groups_list(self, subscriptions, headers=None, filter=None, expand=None):
 		for subscription in subscriptions:
@@ -280,7 +303,7 @@ class COGSResourceManager(object):
 					env_tag,
 					created_time,
 					None,
-					1 if can_be_deleted_tag and can_be_deleted_tag is not None else 0
+					1 if can_be_deleted_tag is not None and can_be_deleted_tag == "true" else 0
 					))
 
 	def get_cost_by_rg_current_month(self, headers=None):
@@ -323,7 +346,15 @@ class COGSResourceManager(object):
 						self.cost_by_rg[rg_name] = {
 							"currentMonth": cost,
 							"subscription": subscription_id,
-							"lastMonth": 0.
+							"lastMonth": 0.,
+							"prevPrevMonth": 0.,
+							"prevDay": 0.,
+							"prev2Day": 0.,
+							"prev3Day": 0.,
+							"prev4Day": 0.,
+							"prev5Day": 0.,
+							"prev6Day": 0.,
+							"prev7Day": 0.
 						}
 			elif response.status_code == 401:
 				logging.error("[Cost API][Current Month] Unauthorized Error for subscription {0}".format(subscription_id))
@@ -333,6 +364,58 @@ class COGSResourceManager(object):
 
 		end = time.time()
 		logging.info("Time to get RGs cost for Current Month: {0}".format(end - start))
+
+	def get_cost_by_rg_custom_range(self, range_start, range_end, custom_range_str, headers=None):
+		start = time.time()
+		logging.debug("Custom range ({0}) for cost: {1} --- {2}".format(custom_range_str, range_start, range_end))
+		for subscription in self.CONFIG["AZURE_SUBSCRIPTIONS"]:
+			subscription_id = subscription["ID"]
+			logging.info("Getting Custom Range RG cost for subscription {0}".format(subscription_id))
+			url = self.CONFIG["URLS"]["COST_MGMT_BY_SUB"].format(SUBSCRIPTION_ID=subscription_id)
+			logging.debug("url: {0}".format(url))
+			request_body = {
+				"type":"ActualCost",
+				"dataSet": {
+					"granularity":"None",
+					"aggregation": {
+						"totalCost": {
+							"name":"PreTaxCost",
+							"function":"Sum"
+						}
+					},
+					"grouping": [
+						{
+							"type":"Dimension",
+							"name":"ResourceGroupName"
+						}
+					]
+				},
+				"timeframe":"Custom",
+				"timePeriod": {
+					"from": range_start,
+					"to": range_end
+				}
+			}
+
+			response = self.do_requests(url, COGSResourceManager.REQUESTS_POST, headers=headers, payload=request_body, content_type="json")
+
+			if response.status_code == 200:
+				data = json.loads(response.content)
+				rows = data["properties"]["rows"]
+				for row in rows:
+					if row:
+						rg_name = row[1]
+						cost = row[0]
+						if rg_name in self.cost_by_rg:
+							self.cost_by_rg[rg_name][custom_range_str] = cost
+			elif response.status_code == 401:
+				logging.error("[Cost API][Custom Range] ({0}) Unauthorized Error for subscription {1}".format(custom_range_str, subscription_id))
+			else:
+				logging.error("[Cost API][Custom Range] ({0}) Error code: {1}".format(custom_range_str, response.status_code))
+			logging.info("Done.")
+
+		end = time.time()
+		logging.info("Time to get RGs cost for Custom Range ({0}): {1}".format(custom_range_str, end - start))
 
 	def get_cost_by_rg_last_month(self, headers=None):
 		start = time.time()
@@ -358,7 +441,7 @@ class COGSResourceManager(object):
 						}
 					]
 				},
-				"timeframe":"TheLastmonth"
+				"timeframe":"TheLastBillingMonth"
 			}
 
 			response = self.do_requests(url, COGSResourceManager.REQUESTS_POST, headers=headers, payload=request_body, content_type="json")
@@ -385,7 +468,8 @@ class COGSResourceManager(object):
 	def get_cost_by_rg_list(self):
 		for rg_name, rg_values in self.cost_by_rg.items():
 			self.cost_by_rg_list.append(
-				(rg_name, rg_values["subscription"], rg_values["currentMonth"], rg_values["lastMonth"])
+				(rg_name, rg_values["subscription"], rg_values["currentMonth"], rg_values["lastMonth"], rg_values["prevPrevMonth"], rg_values["prevDay"],
+				rg_values["prev2Day"], rg_values["prev3Day"], rg_values["prev4Day"], rg_values["prev5Day"], rg_values["prev6Day"], rg_values["prev7Day"])
 			)
 
 	def get_cost_by_rg_owner(self):
@@ -585,6 +669,26 @@ class COGSResourceManager(object):
 	def get_cost_data_wrapper(self, headers=None):
 		self.get_cost_by_rg_current_month(headers=headers)
 		self.get_cost_by_rg_last_month(headers=headers)
+
+		prev_prev_month_datetime = datetime.now() - relativedelta(months=2)
+		start_date, end_date = self._get_start_end_of_prev_prev_month(prev_prev_month_datetime)
+		range_start = start_date.strftime(self.CONFIG["DATES"]["READ_DATE_FORMAT"])
+		range_end = end_date.strftime(self.CONFIG["DATES"]["READ_DATE_FORMAT"])
+
+		logging.debug("Using custom date range for cost: {0} - {1}".format(range_start, range_end))
+
+		self.get_cost_by_rg_custom_range(range_start, range_end, "prevPrevMonth", headers=headers)
+
+		for i in range(7):
+			prev_day_datetime = datetime.now() - relativedelta(days=(i+1))
+			start_date, end_date = self._get_start_end_of_day(prev_day_datetime)
+			range_start = start_date.strftime(self.CONFIG["DATES"]["READ_DATE_FORMAT"])
+			range_end = end_date.strftime(self.CONFIG["DATES"]["READ_DATE_FORMAT"])
+
+			logging.debug("Using custom date range for cost: {0} - {1}".format(range_start, range_end))
+
+			self.get_cost_by_rg_custom_range(range_start, range_end, COGSResourceManager.PREV_DAYS_LIST[i], headers=headers)
+
 		self.get_cost_by_rg_list()
 		# get_cost_by_rg_owner()
 
