@@ -489,6 +489,7 @@ class COGSResourceManager(object):
 		start = time.time()
 		if not is_update:
 			self.cursor.execute(sql_config["TRUNCATE_SQL"])
+			self.cursor.fast_executemany = True
 			self.cursor.executemany(sql_config["INSERT_SQL"], data)
 		else:
 			self.cursor.execute(sql_config["UPDATE_SQL"], data)
