@@ -1,3 +1,4 @@
+import argparse
 import os
 import requests
 import json
@@ -98,7 +99,7 @@ class COGSResourceManager(object):
 						if resource["sku"]["name"] != "Standard_D2_v3" or resource["sku"]["capacity"] != 3:
 							print("\n{0}\nSKU: {1}".format(resource["name"], resource["sku"]))
 
-	def _get_start_end_of_prev_prev_month(self, current_date):
+	def _get_start_end_of_current_date_month(self, current_date):
 		"""
 			For a date 'date' returns the start and end date for the month of 'date'.
 			Month with 31 days:
@@ -348,6 +349,7 @@ class COGSResourceManager(object):
 							"subscription": subscription_id,
 							"lastMonth": 0.,
 							"prevPrevMonth": 0.,
+							"prev3Month": 0.,
 							"prevDay": 0.,
 							"prev2Day": 0.,
 							"prev3Day": 0.,
@@ -468,7 +470,7 @@ class COGSResourceManager(object):
 	def get_cost_by_rg_list(self):
 		for rg_name, rg_values in self.cost_by_rg.items():
 			self.cost_by_rg_list.append(
-				(rg_name, rg_values["subscription"], rg_values["currentMonth"], rg_values["lastMonth"], rg_values["prevPrevMonth"], rg_values["prevDay"],
+				(rg_name, rg_values["subscription"], rg_values["currentMonth"], rg_values["lastMonth"], rg_values["prevPrevMonth"],  rg_values["prev3Month"], rg_values["prevDay"],
 				rg_values["prev2Day"], rg_values["prev3Day"], rg_values["prev4Day"], rg_values["prev5Day"], rg_values["prev6Day"], rg_values["prev7Day"])
 			)
 
@@ -672,13 +674,22 @@ class COGSResourceManager(object):
 		self.get_cost_by_rg_last_month(headers=headers)
 
 		prev_prev_month_datetime = datetime.now() - relativedelta(months=2)
-		start_date, end_date = self._get_start_end_of_prev_prev_month(prev_prev_month_datetime)
+		start_date, end_date = self._get_start_end_of_current_date_month(prev_prev_month_datetime)
 		range_start = start_date.strftime(self.CONFIG["DATES"]["READ_DATE_FORMAT"])
 		range_end = end_date.strftime(self.CONFIG["DATES"]["READ_DATE_FORMAT"])
 
 		logging.debug("Using custom date range for cost: {0} - {1}".format(range_start, range_end))
 
 		self.get_cost_by_rg_custom_range(range_start, range_end, "prevPrevMonth", headers=headers)
+
+		prev_3_month_datetime = datetime.now() - relativedelta(months=3)
+		start_date, end_date = self._get_start_end_of_current_date_month(prev_3_month_datetime)
+		range_start = start_date.strftime(self.CONFIG["DATES"]["READ_DATE_FORMAT"])
+		range_end = end_date.strftime(self.CONFIG["DATES"]["READ_DATE_FORMAT"])
+
+		logging.debug("Using custom date range for cost: {0} - {1}".format(range_start, range_end))
+
+		self.get_cost_by_rg_custom_range(range_start, range_end, "prev3Month", headers=headers)
 
 		for i in range(7):
 			prev_day_datetime = datetime.now() - relativedelta(days=(i+1))

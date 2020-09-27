@@ -67,7 +67,7 @@
 		},
 		"ResourceGroupCost": {
 			"TRUNCATE_SQL": "TRUNCATE TABLE ResourceGroupCost",
-			"INSERT_SQL": "INSERT INTO ResourceGroupCost (ResourceGroup, Subscription, CurrentMonthCost, PrevMonthCost, PrevPrevMonthCost, PrevDayCost, Prev2DayCost, Prev3DayCost, Prev4DayCost, Prev5DayCost, Prev6DayCost, Prev7DayCost) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+			"INSERT_SQL": "INSERT INTO ResourceGroupCost (ResourceGroup, Subscription, CurrentMonthCost, PrevMonthCost, PrevPrevMonthCost, Prev3MonthCost, PrevDayCost, Prev2DayCost, Prev3DayCost, Prev4DayCost, Prev5DayCost, Prev6DayCost, Prev7DayCost) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
 		},
 		"VMSSResource": {
 			"TRUNCATE_SQL": "TRUNCATE TABLE VMSSResource",
